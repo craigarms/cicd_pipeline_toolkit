@@ -1,0 +1,38 @@
+version: '3.7'
+services:
+    drone:
+        volumes:
+          - "./drone-data:/data"
+        environment:
+          - DRONE_AGENTS_ENABLED=true
+          - DRONE_GOGS_SERVER=http://gogs:3000
+          - DRONE_RPC_SECRET=super-duper-secret
+          - DRONE_SERVER_HOST=drone
+          - DRONE_LOGS_DEBUG=true
+          - DRONE_COOKIE_SECRET=correct-horse-battery-staple
+        ports:
+            - "8083:80"
+            - "8445:443"
+        container_name: drone
+        image: "drone/drone:2"
+
+    drone-runner-docker:
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+        environment:
+          - DRONE_RPC_HOST=drone
+          - DRONE_RPC_SECRET=super-duper-secret
+          - DRONE_RUNNER_CAPACITY=2
+          - DRONE_RUNNER_NAME=my-first-runner
+        ports:
+            - "3000:3000"
+        container_name: runner
+        image: "drone/drone-runner-docker:1"
+
+    gogs:
+        image: gogs/gogs:latest
+        volumes:
+          - "./data:/data"
+        ports:
+          - "8082:3000/tcp"
+          - "10022:22/tcp"
