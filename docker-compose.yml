@@ -1,5 +1,19 @@
 version: '3.7'
 services:
+    reverse-proxy:
+      image: traefik:v2.10
+      command: 
+        - --api.insecure=true 
+        - --providers.docker
+        - --accesslog=true
+        - --log.level=DEBUG
+        - "--providers.docker.exposedbydefault=false"
+      ports:
+        - "80:80"
+        - "8080:8080"
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+
     drone:
         volumes:
           - "./drone-data:/data"
@@ -10,9 +24,10 @@ services:
           - DRONE_SERVER_HOST=drone
           - DRONE_LOGS_DEBUG=true
           - DRONE_COOKIE_SECRET=correct-horse-battery-staple
-        ports:
-            - "8083:80"
-            - "8445:443"
+        labels:  
+          - traefik.enable=true
+          - traefik.http.routers.drone.rule=Host(`drone.172.20.26.51.nip.io`)
+          - traefik.http.services.drone.loadbalancer.server.port=80
         container_name: drone
         image: "drone/drone:2"
 
@@ -33,6 +48,7 @@ services:
         image: gogs/gogs:latest
         volumes:
           - "./data:/data"
-        ports:
-          - "8082:3000/tcp"
-          - "10022:22/tcp"
+        labels:  
+          - traefik.enable=true
+          - traefik.http.routers.gogs.rule=Host(`gogs.172.20.26.51.nip.io`)
+          - traefik.http.services.gogs.loadbalancer.server.port=3000
